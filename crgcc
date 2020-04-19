@@ -1,0 +1,106 @@
+#!/bin/bash
+#compiles your code into "run" and runs it.
+#if you'll give 2 params (comp file and data file). It will
+#send this data to your compiled program.
+#Also, if inside input file you'll
+#enter "answer:\n *actual answer*" it'll compare
+#program's output and actual answer
+function removeWhitespaces() {
+  echo $(echo -e $1 | tr -s ' ')
+}
+
+function printNiceTestBound() {
+  width=$(tput cols)
+  title="|Test $1|"
+  countOfSymbols=$(( ($width - ${#title}) / 2 ));
+  bound=""
+  for i in $(seq 1 $countOfSymbols); do bound+='='; done
+  title=$(echo $bound$title$bound)
+  for i in $(seq 1 $(( $width - ${#title} ))); do printf '='; done
+  echo $title
+}
+
+function insertData() {
+  testID=1
+  testData=''
+  answer=''
+  hasAnswer=0
+  while IFS= read -r line || [[ ! -z "$testData" ]]
+  do
+    if [[ -z $line ]]; then
+      if [[ ! -z "$testData" ]]; then
+        printNiceTestBound $testID
+        echo -e "$testData" 
+        timeBegin=$(($(date +%s%N)/1000000))
+        output=$(echo -e "$testData" | ./run | tee /dev/fd/2)
+        timeEnd=$(($(date +%s%N)/1000000))
+
+        if [[ $hasAnswer -eq 1 ]]; then
+          answer=$(removeWhitespaces "$answer")
+          output=$(removeWhitespaces "$output")
+          if [[ $output == $answer ]]; then
+            echo -e "\e[32mCorrect!"
+          else
+            echo -e "\e[31mIncorrect!"
+          fi
+          answer=''
+          hasAnswer=0
+        fi
+
+        runTime=$((timeEnd - timeBegin))
+        if [[ $runTime -ge 1000 ]]; then
+          rtColor="\\e[31m"
+        else
+          rtColor="\\e[39m"
+        fi
+        echo -e $rtColor"Runtime: " $runTime"ms\\e[39m"
+        ((testID++))
+        testData=''
+      fi
+    else
+      if [[ "$line" == "answer:" || "$line" == "ans:" ]]; then
+        hasAnswer=1
+      elif [[ $hasAnswer -eq 0 ]]; then
+        testData+=$line'\n';
+      else
+        answer+=$line'\n';
+      fi
+    fi
+  done < $1
+}
+
+if [[ $# -eq 0 ]]; then
+  echo No input file!
+  echo "Use crgcc <file name to compile>"
+  echo "Use crgcc <file name to compile> <file with data>"
+  echo "Data file should have this structure:"
+  echo "*test1 data*"
+  echo "BLANK LINE"
+  echo "*test2 data*"
+  echo "answer: //or ans:"
+  echo "*test2 answer data*"
+  echo "Example of input file:"
+  echo -e "1 2 3\nans:\n10 20 30\n\n10 20 30\n\n40 50 60"
+  echo "End of data input file"
+  echo "With this input file script will run 3 tests."
+  echo "One of them it'll compare with the answer and"
+  echo "report if it is correct or not."
+  exit 1
+fi
+
+gcc $1 -o run -O2 -Wall -Werror -Wformat-security -Wignored-qualifiers -Winit-self -Wswitch-default -Wfloat-equal -Wpointer-arith -Wtype-limits -Wempty-body -Wno-logical-op -Wstrict-prototypes -Wold-style-declaration -Wold-style-definition -Wmissing-parameter-type -Wmissing-field-initializers -Wnested-externs -Wno-pointer-sign -Wno-unused-result -std=gnu99 -lm
+
+if [[ $? -eq 0 ]]; then
+  echo \"$1\" COMPILED!
+  if [[ $# -eq 2 ]]; then
+    if [ -f "$2" ]; then
+      insertData $2
+    else
+      echo Sorry, input file not found!
+    fi
+  else
+    ./run
+  fi
+  exit 0
+fi
+exit 2

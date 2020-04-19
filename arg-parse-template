@@ -1,0 +1,41 @@
+#!/bin/sh
+multi=0
+long=0
+parseArg() {
+  if [ $multi -eq 0 ]; then
+    cur=$1
+    [ "$(echo "$cur" | cut -b 1,2)" = "--" ] && long=1 || long=0
+    [ $long -eq 0 ] && [ $(echo "$cur" | wc -m) -gt 3 ] && multi=1 || mutli=0
+  fi
+  if [ $multi -eq 1 ]; then
+    arg=$(echo "$cur" | cut -b 2) 
+    cur="-$(echo "$cur" | cut -d $arg -f2-)"
+    val=$2
+    [ "$cur" = "-" ] && multi=0
+  else
+    [ $long -eq 1 ] && arg=$(echo $cur | cut -d '-' -f3- | cut -d '=' -f1) &&\
+      val=$(echo $cur | cut -d'=' -f2-)
+    [ $long -eq 0 ] && arg=$(echo $cur | cut -b 2) && val=$2
+  fi
+}
+
+noArgs() {
+  echo "No arguments"
+  exit 0
+}
+
+[ $# -eq 0 ] && noArgs
+
+while [ ! -z "$1" ]; do
+  parseArg $1 $2
+  case $arg in
+    #Insert your args here, dont use dashes.
+    #Get your value with $val
+    # you SHOULD 'shift' after single
+    # character argument with value, but 
+    # should NOT after long (--) arg with it.
+  esac
+
+  #keep this for correct parsing
+  [ $multi -eq 0 ] && shift
+done

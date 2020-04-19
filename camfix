@@ -1,0 +1,27 @@
+#!/bin/sh
+#range <from> <to> <delay> <control (hue, gamma, etc)>
+#you can check cam values in range
+range() {
+  i=$2
+  while [ $i -le $3 ]; do
+    v4l2-ctl --set-ctrl $1=$i
+    sleep $4
+    echo $i
+    i=$((i + 1))
+  done
+}
+
+v4l2-ctl --set-ctrl brightness=30
+v4l2-ctl --set-ctrl contrast=0
+v4l2-ctl --set-ctrl saturation=70
+v4l2-ctl --set-ctrl hue=0
+v4l2-ctl --set-ctrl white_balance_temperature_auto=1
+v4l2-ctl --set-ctrl gamma=120
+v4l2-ctl --set-ctrl gain=1
+v4l2-ctl --set-ctrl sharpness=2
+v4l2-ctl --set-ctrl backlight_compensation=3
+#v4l2-ctl --set-ctrl white_balance_temperature=
+#v4l2-ctl --set-ctrl exposure_auto=
+#v4l2-ctl --set-ctrl exposure_absolute=
+#v4l2-ctl --set-ctrl exposure_auto_priority=
+exit 0

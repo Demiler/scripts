@@ -1,0 +1,27 @@
+#!/bin/bash
+
+if  [ $# -eq 0 ]; then
+  echo "pdf2djvu file_name.djvu [file_name2.pdf ...]"
+  exit 0
+fi
+
+for arg; do
+  if [ -f "$arg" ]; then
+    ext="${arg##*.}"
+    if [ "$ext" != "djvu" ]; then
+      echo -e "\e[31m"$arg "is not a djvu file!" "\e[39m" 
+    else
+      filename="${arg%.*}"
+      printf "Converting $(echo $arg | awk '{print substr($arg, 0, 40)}') ."
+      #printf "Converting \"$arg\"."
+      ddjvu -format=tiff "$filename.djvu" "$filename.tiff"
+      printf "."
+      tiff2pdf -j -o "$filename.pdf" "$filename.tiff"
+      printf "."
+      rm "$filename.tiff"
+      echo -e "\e[32m Converted! \e[39m"
+    fi
+  else
+    echo -e "\e[31m"$arg "not found!" "\e[39m"
+  fi
+done

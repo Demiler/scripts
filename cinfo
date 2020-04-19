@@ -1,0 +1,3 @@
+#!/bin/sh
+[ -f "info.l" ] && echo $(sed 's/-/\\e\[32m/g ; s/,/\\e\[37m,\\e\[31m/g' info.l) || echo "Not contest folder"
+exit 0

@@ -1,0 +1,22 @@
+#!/bin/sh
+enumerate() {
+  i=0
+  space="    "
+  while IFS= read -r line; do
+    echo $i"$space$line"
+    i=$(( i + 1 ))
+    [ $(echo "$i % 10" | bc) -eq 0 ] && space=$(echo "$space" | cut -c 2-)
+  done < "$1"
+}
+
+out=$(enumerate ~/bin/data/smile.data | dmenu -h 23 -i -p "Choose your meme" -l 100)
+[ -z "$out" ] && exit
+[ "$out" = "q" ] && exit
+search=$(echo $out | cut -d' ' -f2)
+
+if [ ! -z "$(grep $search ~/bin/data/smile.data)" ]; then
+  #out=$(echo $out | awk '{for (i = 2; i <= NF; i++) print $i}')
+  #echo -n $out | xclip -selection clipboard
+  echo -n $(echo $out | sed "s/^[0-9 ]*\S*\s*//") | xclip -selection clipboard
+  xdotool key shift+Insert
+fi

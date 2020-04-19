@@ -1,0 +1,4 @@
+#!/bin/sh
+cache=~/.config/mps-youtube/cache_py_3.6.9
+mpsyt
+[ $? -ne 0 ] && [ -f $cache ] && rm $cache && mpsyt

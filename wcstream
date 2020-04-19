@@ -1,0 +1,1 @@
+mplayer -title "Webcam" -vf-add mirror tv://device=/dev/video01

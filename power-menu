@@ -1,0 +1,19 @@
+#!/bin/sh
+out=$(echo " Lock\n Sleep\n Reboot\n Shutdown\n Log out" | dmenu -i -p 'Power menu' -fn "Hack:fontsize=12" | cut -d' ' -f2-)
+case $out in
+  Lock)
+    cinnamon-screensaver-command --lock
+  ;;
+  Sleep)
+    systemctl suspend
+  ;;
+  Reboot)
+    reboot
+  ;;
+  Shutdown)
+    poweroff
+  ;;
+  "Log out")
+    cinnamon-session-quit --logout --no-prompt
+  ;;
+esac

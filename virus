@@ -1,0 +1,29 @@
+#!/bin/sh
+green="\e[32m"
+reset="\e[37m\e[40m"
+red="\e[31m"
+maxlen=50
+
+today=$(date +%s)
+for day in $(cat ~/bin/data/virus.data); do
+  danger=$(echo $day | cut -d';' -f1)
+  date=$(echo $day | cut -d';' -f2)
+  days=$(( ($today - $date) / 86400 ))
+  dateH=$(date -d @$date '+%b %d')
+  case $danger in
+    severe) danc="\e[41m";;
+    high) danc="\e[31m";;
+    medium) danc="\e[33m";;
+    notable) danc="\e[34m";;
+    low) danc="\e[32m";;
+  esac
+
+  [ $days -le 15 ] &&\
+    output=$red"open  $reset($danc$danger$reset)" ||\
+    output=$green"close $reset($danc$danger$reset)"
+
+  len=$(echo "$output" | wc -m)
+
+  echo "$output|$(($maxlen - $len))|$dateH [$days days]" | awk -F '|'\
+    '{printf $1; for (i = 0; i < $2; i++) printf " "; print " | "$3}'
+done

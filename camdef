@@ -1,0 +1,16 @@
+#!/bin/sh
+
+v4l2-ctl --set-ctrl brightness=0
+v4l2-ctl --set-ctrl contrast=0
+v4l2-ctl --set-ctrl saturation=64
+v4l2-ctl --set-ctrl hue=0
+v4l2-ctl --set-ctrl white_balance_temperature_auto=1
+v4l2-ctl --set-ctrl gamma=100
+v4l2-ctl --set-ctrl gain=1
+v4l2-ctl --set-ctrl power_line_frequency=2
+v4l2-ctl --set-ctrl white_balance_temperature=4600
+v4l2-ctl --set-ctrl sharpness=2
+v4l2-ctl --set-ctrl backlight_compensation=3
+v4l2-ctl --set-ctrl exposure_auto=3
+v4l2-ctl --set-ctrl exposure_absolute=157
+v4l2-ctl --set-ctrl exposure_auto_priority=0
