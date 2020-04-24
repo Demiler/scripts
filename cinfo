@@ -1,3 +1,4 @@
 #!/bin/sh
-[ -f "info.l" ] && echo $(sed 's/-/\\e\[32m/g ; s/,/\\e\[37m,\\e\[31m/g' info.l) || echo "Not contest folder"
+file="tasks"
+[ -f "$file" ] && echo $(sed 's/-/\\e\[32m/g ; s/,/\\e\[37m,\\e\[31m/g' $file)'\e[37m' || echo "Not contest folder"
 exit 0

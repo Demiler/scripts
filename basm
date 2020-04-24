@@ -86,18 +86,22 @@ done
 [ "$dir" = "build" ] && [ ! -d "build" ] && mkdir "build"
 [ ! -d "$dir" ] && echo "\e[31mError\e[37m: Directory \"$dir\" doesn't exists!" && exit 3
 
+ext=$(echo $file | cut -d'.' -f2)
 name=$(echo $file | cut -d'.' -f1)
-[ -z $output ] && output=$name
-if [ $warnings -eq 1 ]; then
-  noext=0
-  [ "$name" = "$file" ] && noext=1 && warning "no file extension!" && read -p "Continue? [y/N] " continueq
-  [ ! -z $continueq ] && [ "$continueq" != "y" ] && msg "No" && exit 4 || [ ! -z $continueq ] && msg "Yes"
-  #[ "$name" = "$file" ] && echo "You must use file extension!" && exit 3
+[ "$name" = "$file" ] && name="$name"EXT
+[ -z $output ] && output="$name"
 
-  if [ $noext -eq 0 ]; then 
-    ext=$(echo $file | cut -d'.' -f2)
-    [ "$ext" != "asm" ] && warning "not an asm extension!" && read -p "Continue? [y/N] " continueq
-    [ ! -z $continueq ] && [ "$continueq" != "y" ] && msg "No" && exit 4 || [ ! -z $continueq ] && msg "Yes"
+if [ $warnings -eq 1 ]; then
+  if [ -z $ext ]; then
+    warning "no file extension!" && read -p "Continue? [y/N] " choose
+    [ -z $choose ] && choose="n"
+    [ "$choose" != "y" ] && msg "No" && exit 4 || msg "Yes"
+  fi
+
+  if [ "$ext" != "asm" ]; then 
+    warning "not an asm extension!" && read -p "Continue? [y/N] " choose
+    [ -z $choose ] && choose="n"
+    [ "$choose" != "y" ] && msg "No" && exit 4 || msg "Yes" 
   fi
 fi
 
@@ -120,5 +124,10 @@ gcc "$dir/$name.o" $o_temp $debug -o "$dir/$output" -m32
 rm -f $c_temp $o_temp 
 [ $keepobj -ne 1 ] && rm "$dir/$name.o"
 
-[ $run -eq 1 ] && msg "$name compiled!" && "$dir/$name"
+if [ $run -eq 1 ]; then
+  msg "$name compiled!"
+  "$dir/$output"
+  retval=$?
+  [ $retval -ne 0 ] && warning "Program returned non-zero value!" && exit $retval
+fi
 exit 0

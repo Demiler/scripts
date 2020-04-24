@@ -14,7 +14,8 @@ out=$(enumerate ~/bin/data/smile.data | dmenu -h 23 -i -p "Choose your meme" -l 
 [ "$out" = "q" ] && exit
 search=$(echo $out | cut -d' ' -f2)
 
-if [ ! -z "$(grep $search ~/bin/data/smile.data)" ]; then
+echo $search
+if [ ! -z "$(grep "$search" ~/bin/data/smile.data)" ]; then
   #out=$(echo $out | awk '{for (i = 2; i <= NF; i++) print $i}')
   #echo -n $out | xclip -selection clipboard
   echo -n $(echo $out | sed "s/^[0-9 ]*\S*\s*//") | xclip -selection clipboard
