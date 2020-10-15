@@ -13,6 +13,7 @@ Usage: bgcc [-f] \e[4mfile\e[0m [-rpgwsjmahe] [-d \e[4mdir\e[0m] [-o \e[4mfile\e
    -D\tDont trim test data
    -A\tDont trim test answer
    -T\tShow test file structure
+   -F\tShow only failed tests
   -S n\tCompile with sanitizer level n
   -L\tPrint sanitizers levels
   -W\tWatch file
@@ -150,8 +151,10 @@ killer() {
 }
 
 performTest() {
-  [ "$testId" -ne 0 ] && echo
-  printNiceTestBound $testId
+  if [ "$onlyFailed" -ne 1 ]; then
+    [ "$testId" -ne 0 ] && echo
+    printNiceTestBound $testId
+  fi
 
   data="$1"
   ans="$2"
@@ -160,36 +163,55 @@ performTest() {
   [ $dontTrimAns -eq 0 ] && 
     ans=$(echo "$2" | sed "s/^ *// ; s/ *$//")
 
-  [ $hideData -eq 0 ] && echo "$data\n\e[33mResult:\e[0m"
+  [ "$onlyFailed" -ne 1 ] &&
+    [ $hideData -eq 0 ] && echo "$data\n\e[33mResult:\e[0m"
 
   timeStart="$(date +%s%N)"
 
-  echo "$data" | $program $progArgs | tee $tmpfile &
-  pidOfProg=$!
-  killer $pidOfProg &
-  pidOfKiller=$!
-  wait $pidOfProg
-  kill -9 $pidOfKiller > /dev/null 2>&1
+  if [ "$onlyFailed" -ne 1 ]; then
+    echo "$data" | $program $progArgs | tee $tmpfile &
+    pidOfProg=$!
+    killer $pidOfProg &
+    pidOfKiller=$!
+    wait $pidOfProg
+    kill -9 $pidOfKiller > /dev/null 2>&1
+  else
+    echo "$data" | $program $progArgs > $tmpfile
+  fi
 
   progOutput="$(cat $tmpfile)"
 
   timeEnd="$(date +%s%N)"
-
-  #[ "$(printf "$progOutput" | tail -c 1)" ] && echo
+  
+  [ "$onlyFailed" -ne 1 ] &&
+    [ "$(printf "$progOutput" | tail -c 1)" ] && echo
 
   takingTime=$(echo "scale=2; ($timeEnd - $timeStart) / 1000000" | bc -l)
-  echo "\e[36mTime:\e[0m" $takingTime"ms"
+
+  [ "$onlyFailed" -ne 1 ] &&
+    echo "\e[36mTime:\e[0m" $takingTime"ms"
 
   testId=$(($testId + 1))
 
   if [ ! -z "$ans" ]; then 
     [ $dontTrimAns -eq 0 ] && 
       progOutput=$(echo "$progOutput" | sed "s/^ *// ; s/ *$//")
+
     if [ "$ans" = "$progOutput" ]; then
-      echo "\e[32mCorrect\e[0m" 
+      [ "$onlyFailed" -ne 1 ] &&
+        echo "\e[32mCorrect\e[0m" 
       return 1
     else
+      if [ "$onlyFailed" -eq 1 ]; then
+        echo
+        printNiceTestBound $testId
+        [ $hideData -eq 0 ] && echo "$data\n\e[33mResult:\e[0m"
+        echo "$progOutput"
+      fi
+
       echo "\e[31mIncorrect\e[0m"
+      [ "$onlyFailed" -eq 1 ] &&
+        echo "$ans"
       return 0
     fi
   fi
@@ -238,7 +260,13 @@ runTests() {
 
   [ $curStatus -eq 1 ] && testData="$buf"
   [ $curStatus -eq 2 ] && testAns="$buf"
-  [ $curStatus -ne 0 ] && performTest "$testData" "$testAns"
+  if [ $curStatus -ne 0 ]; then
+    performTest "$testData" "$testAns"
+    passed=$?
+    [ ! -z "$testAns" ] && 
+      testPassed=$(($testPassed + $passed)) &&
+      testTotal=$(($testTotal + 1))
+  fi
 
   printf '\e[34mSummary: '
   if [ $testPassed -ne $testTotal ]; then
@@ -263,7 +291,7 @@ runProgram() {
   else
     "$dir/$output" $progArgs
     retval=$?
-    [ $retval -ne 0 ] && warning "Program returned non-zero value!" && exit $retval
+    [ $retval -ne 0 ] && warning "Program returned non-zero ($retval) value!" && exit $retval
   fi fi
 }
 
@@ -279,6 +307,7 @@ pipeInp=""
 hideData=0
 dir="build"
 testFile=""
+onlyFailed=0
 sanitizers=""
 dontTrimAns=0
 dontTrimData=0
@@ -335,6 +364,7 @@ while [ ! -z "$1" ]; do
       -I) hideData=1;;
       -D) dontTrimData=1;;
       -A) dontTrimAns=1;;
+      -F) onlyFailed=1;;
       -W) watch=1;;
       -e) errorcode; exit 0;;
       -s) msg=0;;
